@@ -2,11 +2,14 @@
   <vxe-table
     border
     round
-    ref="xTable1"
-    :column-config="{ resizable: true }"
+    ref="tableRef"
+    :column-config="{ resizable: false }"
     :row-config="{ isHover: true }"
     :data="props.tableData"
+    @checkbox-all="selectAllChangeEvent"
+    @checkbox-change="selectChangeEvent"
   >
+    <vxe-column v-if="props.checkbox" type="checkbox" width="60"></vxe-column>
     <template v-for="(item, i) in column" :key="i">
       <vxe-column
         :field="item.value"
@@ -121,7 +124,7 @@
                       <p class="filterTitleOnBody">
                         >
                         <a-input
-                          v-model:value="item.filterData[0].data"
+                          v-model:value="item.filterData.gt"
                           style="width: 150px"
                         />
                       </p>
@@ -130,7 +133,7 @@
                       <p class="filterTitleOnBody">
                         {{ "<" }}
                         <a-input
-                          v-model:value="item.filterData[0].data"
+                          v-model:value="item.filterData.lt"
                           style="width: 150px"
                         />
                       </p>
@@ -139,7 +142,7 @@
                       <p class="filterTitleOnBody">
                         {{ "=" }}
                         <a-input
-                          v-model:value="item.filterData[0].data"
+                          v-model:value="item.filterData.eq"
                           style="width: 150px"
                         />
                       </p>
@@ -204,7 +207,14 @@ defineOptions({
   name: "TurtleTable",
 });
 //父组件参数
-const props = defineProps(["tableData", "column", "searchData"]);
+const props = defineProps([
+  "checkbox",
+  "tableData",
+  "column",
+  "searchData",
+  "selectAllChange",
+  "selectChange",
+]);
 const com = props;
 const searchForm = ref({
   sortField: "",
@@ -215,6 +225,7 @@ let searchClass = ref("isSearch");
 let options = ref([]);
 options.value = columns.value;
 
+const tableRef = ref();
 let column = ref([]);
 column.value = columns.value;
 let checkList = ref([]);
@@ -282,14 +293,36 @@ const inputFilter = debounce((data, item) => {
     });
   }
 }, 300);
+// checkbox
+const selectAllChangeEvent = ({ checked }) => {
+  const $table = tableRef.value;
+  if ($table) {
+    props.selectAllChange(checked);
+  }
+};
+const selectChangeEvent = ({ checked, row, rowIndex }) => {
+  const $table = tableRef.value;
+  if ($table) {
+    props.selectChange(checked, row, rowIndex);
+  }
+};
 init();
 </script>
 <style lang="less" scoped>
+body {
+  height: 100vh;
+  width: 100vw;
+}
+#app {
+  width: 100%;
+  height: 100%;
+}
 :deep(.vxe-header--column) {
   .vxe-cell {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    overflow: hidden;
     .vxe-cell--title {
       flex: 1;
       display: flex;

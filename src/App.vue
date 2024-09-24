@@ -1,9 +1,24 @@
 <template>
-  <turtleTable :column="column" :tableData="tableData" :searchData="searchData" />
+  <!-- <turtleTable
+    :check="true"
+    :column="column"
+    :tableData="tableData"
+    :searchData="searchData"
+  /> -->
+  <div class="body">
+    <Table
+      :checkbox="true"
+      :column="column"
+      :tableData="tableData"
+      :searchData="searchData"
+      :selectAllChange="selectAllChangeEvent"
+      :selectChange="selectAllChangeEvent"
+    />
+  </div>
 </template>
 <script setup>
 import { ref } from "vue";
-// import Table from "./components/Table.vue";
+import Table from "./components/Table.vue";
 const format = (e) => {
   const len = 6; // 固定长度
   let theNum = e + ""; // 数值
@@ -20,10 +35,131 @@ const searchData = ref({
   sort: {},
   filter: [],
 });
-const tableData = ref([]);
+const tableData = ref([
+  {
+    bait: "NA",
+    cellType: "-",
+    description: "hsa_WT_Kidney_None(T); WTE_200ng",
+    expId: 152952,
+    experimentDate: "Sun, 27 Aug 2023 16:00:00 GMT",
+    expname: "Exp166020",
+    fluid: "-",
+    idx: 0,
+    instrument: "Q Exactive HF-X",
+    lab: "Dr.Jun Qin Lab",
+    numFraction: 1,
+    numGene: 0,
+    numIsoform: 0,
+    numPeptide: 0,
+    numRepeat: 1,
+    numSpectrum: 0,
+    operator: "Chen Ding",
+    organ: "Kidney",
+    species: "Homo sapiens (Human)",
+    stage: -1,
+    tissue: "Excretory system",
+    type: "Profiling",
+  },
+  {
+    bait: "NA",
+    cellType: "-",
+    description: "hsa_WT_Kidney_None(T); WTE_200ng",
+    expId: 152917,
+    experimentDate: "Sun, 27 Aug 2023 16:00:00 GMT",
+    expname: "Exp165985",
+    fluid: "-",
+    idx: 1,
+    instrument: "Q Exactive HF-X",
+    lab: "Dr.Jun Qin Lab",
+    numFraction: 1,
+    numGene: 0,
+    numIsoform: 0,
+    numPeptide: 0,
+    numRepeat: 1,
+    numSpectrum: 0,
+    operator: "Chen Ding",
+    organ: "Kidney",
+    species: "Homo sapiens (Human)",
+    stage: -1,
+    tissue: "Excretory system",
+    type: "Profiling",
+  },
+  {
+    bait: "NA",
+    cellType: "-",
+    description: "hsa_WT_Kidney_None(T); WTE_200ng",
+    expId: 152916,
+    experimentDate: "Sun, 27 Aug 2023 16:00:00 GMT",
+    expname: "Exp165984",
+    fluid: "-",
+    idx: 2,
+    instrument: "Q Exactive HF-X",
+    lab: "Dr.Jun Qin Lab",
+    numFraction: 1,
+    numGene: 0,
+    numIsoform: 0,
+    numPeptide: 0,
+    numRepeat: 1,
+    numSpectrum: 0,
+    operator: "Chen Ding",
+    organ: "Kidney",
+    species: "Homo sapiens (Human)",
+    stage: -1,
+    tissue: "Excretory system",
+    type: "Profiling",
+  },
+  {
+    bait: "NA",
+    cellType: "-",
+    description: "hsa_WT_Kidney_None(T); WTE_200ng",
+    expId: 152914,
+    experimentDate: "Sun, 27 Aug 2023 16:00:00 GMT",
+    expname: "Exp165982",
+    fluid: "-",
+    idx: 3,
+    instrument: "Q Exactive HF-X",
+    lab: "Dr.Jun Qin Lab",
+    numFraction: 1,
+    numGene: 0,
+    numIsoform: 0,
+    numPeptide: 0,
+    numRepeat: 1,
+    numSpectrum: 0,
+    operator: "Chen Ding",
+    organ: "Kidney",
+    species: "Homo sapiens (Human)",
+    stage: -1,
+    tissue: "Excretory system",
+    type: "Profiling",
+  },
+  {
+    bait: "NA",
+    cellType: "-",
+    description: "hsa_WT_Kidney_None(T); WTE_200ng",
+    expId: 152913,
+    experimentDate: "Sun, 27 Aug 2023 16:00:00 GMT",
+    expname: "Exp165981",
+    fluid: "-",
+    idx: 4,
+    instrument: "Q Exactive HF-X",
+    lab: "Dr.Jun Qin Lab",
+    numFraction: 1,
+    numGene: 0,
+    numIsoform: 0,
+    numPeptide: 0,
+    numRepeat: 1,
+    numSpectrum: 0,
+    operator: "Chen Ding",
+    organ: "Kidney",
+    species: "Homo sapiens (Human)",
+    stage: -1,
+    tissue: "Excretory system",
+    type: "Profiling",
+  },
+]);
 const column = ref([
   {
-    value: "id",
+    value: "bait",
     title: "Reagent No",
     type: "format",
     format: format,
@@ -33,7 +169,7 @@ const column = ref([
     filterData: [{ data: "" }],
   },
   {
-    value: "type",
+    value: "cellType",
     title: "Reagent Type",
     type: "string",
     sortable: true,
@@ -94,5 +230,16 @@ const column = ref([
     disabled: false,
   },
 ]);
+const selectAllChangeEvent = (checked) => {
+  console.log(checked);
+};
 </script>
-<style scoped></style>
+<style scoped>
+.body {
+  padding: 18px 8px;
+  border-radius: 8px;
+  background: #e6e6e6;
+  margin-bottom: 20px;
+  width: 1200px;
+}
+</style>
