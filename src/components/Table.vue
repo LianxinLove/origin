@@ -4,10 +4,19 @@
     round
     ref="tableRef"
     :column-config="{ resizable: false }"
-    :row-config="{ isHover: true }"
+    :row-config="{ isHover: true, keyField: keyField || '' }"
+    :checkbox-config="{
+      reserve: true,
+      checkRowKeys: checkRowKeys || '',
+      checkField: checkField || '',
+    }"
     :data="props.tableData"
+    :max-height="maxHeight"
+    :min-height="minHeight"
+    :height="height"
     @checkbox-all="selectAllChangeEvent"
     @checkbox-change="selectChangeEvent"
+    class="vxeTable"
   >
     <vxe-column v-if="props.checkbox" type="checkbox" width="60"></vxe-column>
     <template v-for="(item, i) in column" :key="i">
@@ -26,12 +35,12 @@
 
             <ArrowUpOutlined
               v-show="
-                searchForm.dir == 'asc' && searchForm.sortField == item.value
+                searchForm[0].value == 'asc' && searchForm[0].key == item.value
               "
             />
             <ArrowDownOutlined
               v-show="
-                searchForm.dir == 'desc' && searchForm.sortField == item.value
+                searchForm[0].value == 'desc' && searchForm[0].key == item.value
               "
             />
           </span>
@@ -61,6 +70,7 @@
                     :options="options"
                     @change="checkListChange"
                     class="tableCheckbox"
+                    style="display: grid"
                   >
                     <template #label="{ title }">
                       <span>{{ title }}</span>
@@ -187,6 +197,9 @@
           <template v-if="item.type == 'custom'">
             <component :is="com[item.customName]" :data="item"></component>
           </template>
+          <template v-else>
+            <span>{{ row[item.value] }}</span>
+          </template>
         </template>
       </vxe-column>
     </template>
@@ -214,18 +227,26 @@ const props = defineProps([
   "searchData",
   "selectAllChange",
   "selectChange",
+  "keyField",
+  "maxHeight",
+  "minHeight",
+  "height",
+  "checkRowKeys",
+  "checkField",
 ]);
 const com = props;
-const searchForm = ref({
-  sortField: "",
-  dir: "",
-});
+const searchForm = ref([
+  {
+    key: "",
+    valye: "",
+  },
+]);
 const columns = ref(props.column);
 let searchClass = ref("isSearch");
 let options = ref([]);
 options.value = columns.value;
 
-const tableRef = ref();
+const tableRef = ref(null);
 let column = ref([]);
 column.value = columns.value;
 let checkList = ref([]);
@@ -262,19 +283,21 @@ const checkListChange = () => {
 const check = (e) => {
   let status = false;
   props.searchData.filter.forEach((d) => {
-    if (d.value == e) {
+    console.log(e);
+    if (d.key == e) {
       status = true;
       return;
     } else {
       status = false;
     }
   });
+  console.log(status);
   return status;
 };
 // 排序方法
 const sortMethod = (state, item) => {
-  searchForm.value.sortField = item.value;
-  searchForm.value.dir = state;
+  searchForm.value[0].key = item.value;
+  searchForm.value[0].value = state;
   props.searchData.sort = searchForm.value;
 };
 // String input筛选
@@ -303,19 +326,18 @@ const selectAllChangeEvent = ({ checked }) => {
 const selectChangeEvent = ({ checked, row, rowIndex }) => {
   const $table = tableRef.value;
   if ($table) {
+    // $table.setCheckboxRow(row.bait, true);
     props.selectChange(checked, row, rowIndex);
   }
 };
 init();
+defineExpose({
+  tableRef,
+});
 </script>
 <style lang="less" scoped>
-body {
-  height: 100vh;
-  width: 100vw;
-}
-#app {
-  width: 100%;
-  height: 100%;
+.vxeTable{
+  display: flex;
 }
 :deep(.vxe-header--column) {
   .vxe-cell {
@@ -344,5 +366,9 @@ body {
       }
     }
   }
+}
+.tableCheckbox {
+  max-height: 350px;
+  overflow: auto;
 }
 </style>
