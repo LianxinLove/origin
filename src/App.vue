@@ -6,27 +6,35 @@
     :searchData="searchData"
   /> -->
   <div class="body">
-    <div>
-      <div>
-        <Table
-          ref="test"
-          :checkbox="true"
-          :column="column"
-          :tableData="tableData"
-          :searchData="searchData"
-          :selectAllChange="selectAllChangeEvent"
-          :selectChange="selectAllChangeEvent"
-          :keyField="'expname'"
-          :checkField="'expname'"
-          :maxHeight="500"
-          :checkRowKeys="['Exp166020']"
-        />
-      </div>
-    </div>
+    <Table
+      ref="test"
+      :checkbox="true"
+      :column="column"
+      :tableData="tableData"
+      :searchData="searchData"
+      :selectAllChange="selectAllChangeEvent"
+      :selectChange="selectAllChangeEvent"
+      :keyField="'expname'"
+      :checkField="'expname'"
+      :maxHeight="500"
+      :checkRowKeys="['Exp166020']"
+      :scroll="scroll"
+    />
+    <Table
+      ref="test"
+      :radio="true"
+      :column="column"
+      :tableData="tableData"
+      :searchData="searchData"
+      :keyField="'expname'"
+      :maxHeight="500"
+      :scroll="scroll"
+    />
   </div>
 </template>
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import img from "./folder.png";
 import Table from "./components/Table.vue";
 const format = (e) => {
   const len = 6; // 固定长度
@@ -1535,6 +1543,7 @@ const tableData = ref([
     type: "Profiling",
   },
 ]);
+
 const column = ref([
   {
     value: "expname",
@@ -1549,11 +1558,15 @@ const column = ref([
   {
     value: "cellType",
     title: "Reagent Type",
-    type: "string",
+    type: "link",
+    icon: img,
     sortable: true,
     disabled: false,
     filterType: "string",
     filterData: [{ data: "" }],
+    linkMethod: (data) => {
+      linkMethod(data);
+    },
   },
   {
     value: "name",
@@ -1567,11 +1580,11 @@ const column = ref([
   {
     value: "manufacturer",
     title: "Manufacturer",
-    type: "string",
+    type: "number",
     sortable: true,
     disabled: false,
-    filterType: "string",
-    filterData: [{ data: "" }],
+    filterType: "number",
+    filterData: [{ gt: "", lt: "", eq: "" }],
   },
   {
     value: "conjugate",
@@ -1615,8 +1628,19 @@ const selectAllChangeEvent = (checked) => {
   console.log();
   // console.log(checked);
 };
+const linkMethod = (data) => {
+  console.log(data);
+};
+const scroll = () => {
+  console.log("bottom");
+};
+// 监听searchData搜索
+watch(searchData.value, (newValue, oldValue) => {
+  // getFirmianaTableData();
+  console.log(newValue);
+});
 </script>
-<style lang="less" scoped>
+<style scoped>
 body {
   height: 100vh;
   width: 100vw;
@@ -1631,8 +1655,5 @@ body {
   background: #e6e6e6;
   margin-bottom: 20px;
   width: 1200px;
-  > div {
-    display: flex;
-  }
 }
 </style>

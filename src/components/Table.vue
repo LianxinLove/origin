@@ -2,22 +2,36 @@
   <vxe-table
     border
     round
+    show-overflow
+    :scroll-y="{ enabled: true, gt: 0 }"
     ref="tableRef"
     :column-config="{ resizable: false }"
-    :row-config="{ isHover: true, keyField: keyField || '' }"
+    :row-config="{
+      isHover: true,
+      keyField: keyField || '',
+      useKey: useKey || '',
+    }"
     :checkbox-config="{
       reserve: true,
       checkRowKeys: checkRowKeys || '',
       checkField: checkField || '',
     }"
+    :radio-config="props.radioConfig"
     :data="props.tableData"
     :max-height="maxHeight"
     :min-height="minHeight"
     :height="height"
     @checkbox-all="selectAllChangeEvent"
     @checkbox-change="selectChangeEvent"
-    class="vxeTable"
+    @scroll-boundary="scrollEvent"
+    @radio-change="handleRadioChange"
   >
+    <vxe-column
+      v-if="props.radio"
+      type="radio"
+      :title="props.radioTitle"
+      width="60"
+    ></vxe-column>
     <vxe-column v-if="props.checkbox" type="checkbox" width="60"></vxe-column>
     <template v-for="(item, i) in column" :key="i">
       <vxe-column
@@ -51,7 +65,7 @@
               @click="item.open = !item.open"
             />
             <template #overlay>
-              <a-menu triggerSubMenuAction="click">
+              <a-menu triggerSubMenuAction="click" class="menu">
                 <a-menu-item @click="sortMethod('asc', item)">
                   <ArrowUpOutlined />
                   Sort Ascending
@@ -88,7 +102,7 @@
                       v-model:value="item.filterData[0].data"
                       placeholder="Search"
                       style="width: 188px; display: block"
-                      @change="inputFilter(item.filterData[0].data, item.value)"
+                      @input="inputFilter(item.filterData[0].data, item.value)"
                     />
                   </template>
                   <template v-if="item.filterType == 'date'">
@@ -129,13 +143,20 @@
                       />
                     </div>
                   </template>
-                  <template v-if="item.filterType == 'num'">
+                  <template v-if="item.filterType == 'number'">
                     <div>
                       <p class="filterTitleOnBody">
                         >
                         <a-input
-                          v-model:value="item.filterData.gt"
+                          v-model:value="item.filterData[0].gt"
                           style="width: 150px"
+                          @input="
+                            inputNumberFilter(
+                              item.filterData[0].gt,
+                              item.value,
+                              'gt'
+                            )
+                          "
                         />
                       </p>
                     </div>
@@ -143,8 +164,15 @@
                       <p class="filterTitleOnBody">
                         {{ "<" }}
                         <a-input
-                          v-model:value="item.filterData.lt"
+                          v-model:value="item.filterData[0].lt"
                           style="width: 150px"
+                          @input="
+                            inputNumberFilter(
+                              item.filterData[0].lt,
+                              item.value,
+                              'lt'
+                            )
+                          "
                         />
                       </p>
                     </div>
@@ -152,8 +180,15 @@
                       <p class="filterTitleOnBody">
                         {{ "=" }}
                         <a-input
-                          v-model:value="item.filterData.eq"
+                          v-model:value="item.filterData[0].eq"
                           style="width: 150px"
+                          @input="
+                            inputNumberFilter(
+                              item.filterData[0].eq,
+                              item.value,
+                              'eq'
+                            )
+                          "
                         />
                       </p>
                     </div>
@@ -167,6 +202,9 @@
           <template v-if="item.type == 'string'">
             <span>{{ row[item.value] }}</span>
           </template>
+          <template v-if="item.type == 'number'">
+            <span>{{ row[item.value] }}</span>
+          </template>
           <template v-if="item.type == 'format'">
             <span>{{ item.format(row[item.value]) }}</span>
           </template>
@@ -178,7 +216,10 @@
           </template>
 
           <template v-if="item.type == 'link'">
-            <a-button type="link">{{ row[item.value] }}</a-button>
+            <img v-if="item.icon" :src="item.icon" alt="" class="linkIcon" />
+            <a-button type="link" @click="item.linkMethod(row)">{{
+              row[item.value]
+            }}</a-button>
           </template>
           <template v-if="item.type == 'handle'">
             <span
@@ -189,6 +230,7 @@
               <a-button
                 type="primary"
                 :danger="data.type == 'danger' ? true : false"
+                @click="data.linkMethod(row)"
               >
                 {{ data.title }}
               </a-button>
@@ -197,7 +239,7 @@
           <template v-if="item.type == 'custom'">
             <component :is="com[item.customName]" :data="item"></component>
           </template>
-          <template v-else>
+          <template v-if="item.type == ''">
             <span>{{ row[item.value] }}</span>
           </template>
         </template>
@@ -215,7 +257,8 @@ import {
   CaretDownOutlined,
 } from "@ant-design/icons-vue";
 import { ref, h } from "vue";
-import { debounce } from "@/tools/tools.js";
+import { debounce } from "lodash";
+// import { debounce } from "@/tools/tools.js";
 defineOptions({
   name: "TurtleTable",
 });
@@ -227,14 +270,22 @@ const props = defineProps([
   "searchData",
   "selectAllChange",
   "selectChange",
+  "radioChange",
   "keyField",
   "maxHeight",
   "minHeight",
   "height",
   "checkRowKeys",
   "checkField",
+  "useKey",
+  "scroll",
+  "radioConfig",
+  "radioTitle",
+  "radio",
 ]);
 const com = props;
+const inputData = ref();
+const inputItem = ref();
 const searchForm = ref([
   {
     key: "",
@@ -257,7 +308,10 @@ const init = () => {
     });
   }
 };
-
+// 单选
+const handleRadioChange = ({ row }) => {
+  props.radioChange(row);
+};
 // 列控制
 const checkListChange = () => {
   column.value = [];
@@ -283,7 +337,6 @@ const checkListChange = () => {
 const check = (e) => {
   let status = false;
   props.searchData.filter.forEach((d) => {
-    console.log(e);
     if (d.key == e) {
       status = true;
       return;
@@ -291,7 +344,6 @@ const check = (e) => {
       status = false;
     }
   });
-  console.log(status);
   return status;
 };
 // 排序方法
@@ -300,22 +352,57 @@ const sortMethod = (state, item) => {
   searchForm.value[0].value = state;
   props.searchData.sort = searchForm.value;
 };
-// String input筛选
-const inputFilter = debounce((data, item) => {
-  if (check(item)) {
+const inputDebounce = () => {
+  if (check(inputItem.value)) {
     props.searchData.filter.forEach((e) => {
-      if (e.key == item) {
-        e.value = data;
+      if (e.key == inputItem.value) {
+        e.value = inputData.value;
       }
     });
   } else {
     props.searchData.filter.push({
-      key: item,
-      value: data,
+      key: inputItem.value,
+      value: inputData.value,
       type: "string",
     });
   }
-}, 300);
+};
+const inputNumberDebounce = (inputData, inputItem, type) => {
+  if (check(inputItem)) {
+    props.searchData.filter.forEach((e) => {
+      if (e.key == inputItem) {
+        e.value[type] = inputData;
+      }
+    });
+  } else {
+    const data = { gt: "", lt: "", eq: "" };
+    data[type] = inputData;
+    props.searchData.filter.push({
+      key: inputItem,
+      value: data,
+      type: "number",
+    });
+  }
+  console.log(props.searchData.filter);
+};
+// String input 筛选
+const inputFilter = (data, item) => {
+  inputData.value = data;
+  inputItem.value = item;
+  console.log(data, item);
+  debounce(inputDebounce, 300)();
+};
+// number input 筛选
+const inputNumberFilter = (data, item, type) => {
+  // inputData.value = data;
+  // inputItem.value = item;
+  // const inputData = data;
+  // const inputItem = item;
+  // console.log(data, item, type);
+  debounce(() => {
+    inputNumberDebounce(data, item, type);
+  }, 300)();
+};
 // checkbox
 const selectAllChangeEvent = ({ checked }) => {
   const $table = tableRef.value;
@@ -330,20 +417,41 @@ const selectChangeEvent = ({ checked, row, rowIndex }) => {
     props.selectChange(checked, row, rowIndex);
   }
 };
+// scrollEvent
+const scrollEvent = ({ direction, isLeft, isRight, isTop, isBottom }) => {
+  if (isLeft) {
+  }
+  if (isRight) {
+  }
+  if (isTop) {
+  }
+  if (isBottom) {
+    if (props.scroll) {
+      props.scroll();
+    }
+  }
+};
 init();
 defineExpose({
   tableRef,
 });
 </script>
 <style lang="less" scoped>
-.vxeTable{
-  display: flex;
+body {
+  height: 100vh;
+  width: 100vw;
 }
+#app {
+  width: 100%;
+  height: 100%;
+}
+
 :deep(.vxe-header--column) {
   .vxe-cell {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+
     overflow: hidden;
     .vxe-cell--title {
       flex: 1;
@@ -354,6 +462,7 @@ defineExpose({
         max-width: 80%;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 32px;
         .titleInfo {
           margin-right: 15px;
         }
@@ -370,5 +479,13 @@ defineExpose({
 .tableCheckbox {
   max-height: 350px;
   overflow: auto;
+}
+.linkIcon {
+  width: 30px;
+  height: 30px;
+}
+:deep(.vxe-cell) {
+  display: flex;
+  flex-wrap: nowrap;
 }
 </style>

@@ -4,26 +4,28 @@ export function checkForm(formName, checkList) {
     formName.value
       .validate()
       .then(() => {
-        res()
+        res();
       })
       .catch((error) => {
-        console.log('error', error)
-      })
-  })
-  checkList.push(result)
+        console.log("error", error);
+      });
+  });
+  checkList.push(result);
 }
 // 防抖
 export function debounce(fn, delay) {
-  // 定时器
-  let timer = null
-  return function (...args) {
-    const _this = this
-    if (timer) {
-      clearTimeout(timer)
+  let time = null;
+  let flag = true; //标识是不是第一次触发
+  return function () {
+    clearTimeout(time);
+    if (flag) {
+      fn.apply(this, arguments);
+      flag = false;
     }
-    timer = setTimeout(function () {
-      timer = null
-      fn.apply(_this, args)
-    }, delay)
-  }
+    time = setTimeout(() => {
+      //触发定时器
+      fn.apply(this, arguments);
+      flag = true;
+    }, delay);
+  };
 }
